@@ -11,29 +11,35 @@ let home = function() {
     "use strict";    
 
     document.body.appendChild(document.createElement('home'));
-    riot.mount('home');    
+    riot.mount('home');
 };
 
 let router = Router({
     '/': home
 });
 
+let connectionAttempts = 0;
+
 Storage.get().then( (events) => {
-    let eventSource = new EventSource("http://54.198.63.196:8080/events/subscribe");
+    EventStore.events = events;    
 
-    eventSource.onmessage = function (e) {
-        let appState = reduce(EventStore.events);
+    let eventSource = new EventSource("http://localhost:8080/events/subscribe");
 
-        appState.events.push(e.data);
+    eventSource.addEventListener('ideafoundry-sse', function(e) {
+      let appState = reduce(EventStore.events);
+
+        appState.orders.push(e.data);
         
         EventStore.add(EventStore.events, [{
             channel: 'async',
-            topic: 'ideafoundry.update.events',
+            topic: 'ideafoundry.update.orders',
             data: appState
         }]);
-    };
+    }, false);
 
     eventSource.onopen = function (e) {
+        connectionAttempts = 0;
+
         let appState = reduce(EventStore.events);
 
         appState.eventSourceState = 'OPEN';
@@ -49,14 +55,20 @@ Storage.get().then( (events) => {
         let appState = reduce(EventStore.events);
 
         if (e.currentTarget.readyState == EventSource.CONNECTING) {
-            appState.eventSourceState = 'CONNECTING';            
-        } else if (e.currentTarget.readyState == EventSource.CLOSING) {
-            appState.eventSourceState = 'CLOSING';
+            appState.eventSourceState = 'CONNECTING';
+            
+            if(connectionAttempts++ >= 3) {
+                appState.eventSourceState = 'CONNECTION REFUSED. ATTEMPTING TO RECONNECT';
+            }
+
+            if(connectionAttempts++ === 5) {
+                appState.eventSourceState = 'UNABLE TO CONNECT. CLOSING CONNECTION';
+                
+                eventSource.close();   
+            }
         } else if (e.currentTarget.readyState == EventSource.CLOSED) {
             appState.eventSourceState = 'CLOSED';
-        }
-
-        //eventSource.close();
+        }    
 
         EventStore.add(EventStore.events, [{
             channel: 'async',
@@ -64,8 +76,6 @@ Storage.get().then( (events) => {
             data: appState
         }]);
     };
-
-    EventStore.events = events;
 
     router.init();
 });

@@ -3,16 +3,27 @@
     <h3>{ viewModel.eventSourceState }</h3>
 
     <ul>
-        <li each={ e, i in viewModel.events }>
-            <div>{ e }</div>
+        <li each={ viewModel.orders }>
+            <div>
+                <h2>Name: { attributes.customer_name }</h2>
+                <h2>Description: { attributes.description }</h2>
+                <h2>Order Date: { attributes.created_at }</h2>
+                <h2>Verification Code: { attributes.verification_code }</h2>
+            </div>        
         </li>
     </ul>
+
+    <style>
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
 
     <script>
         import postal from 'postal/lib/postal.lodash'
 
         this.viewModel = {
-            events: [],
+            orders: [],
             eventSourceState: 'CONNECTING'
         };
 
@@ -21,7 +32,7 @@
                 channel: channel,
                 topic: topic,
                 callback: function(data, envelope) {
-                    this.viewModel.events = data.events;
+                    this.viewModel.orders = data.orders;
                     this.viewModel.eventSourceState = data.eventSourceState;
 
                     this.update(this.viewModel);
@@ -32,7 +43,7 @@
             return subscription;
         };
 
-        this.subscribe('async', 'ideafoundry.update.events');
+        this.subscribe('async', 'ideafoundry.update.orders');
         this.subscribe('async', 'ideafoundry.update.eventSourceState');
     </script>
 </home>

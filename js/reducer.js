@@ -2,8 +2,8 @@ export default function reduce(events) {
     "use strict";
 
     return events.reduce( (state, event) => {
-        if(event.topic === 'ideafoundry.update.events') {
-            state.events = event.data.events;
+        if(event.topic === 'ideafoundry.update.orders') {
+            state.orders = event.data.orders;
         }
 
         if(event.topic === 'ideafoundry.update.eventSourceState') {
@@ -12,7 +12,7 @@ export default function reduce(events) {
         
         return state;
     }, {        
-        events: [],
+        orders: [],
         eventSourceState: 'CONNECTING'
     });
 }
