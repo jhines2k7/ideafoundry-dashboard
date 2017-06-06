@@ -23,7 +23,7 @@ let connectionAttempts = 0;
 Storage.get().then( (events) => {
     EventStore.events = events;    
 
-    let eventSource = new EventSource("http://${config.domain}:8080/events/subscribe");
+    let eventSource = new EventSource(`http://${config.domain}:8080/events/subscribe`);
 
     eventSource.addEventListener('ideafoundry-sse', function(e) {
       let appState = reduce(EventStore.events);
